@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+export PGPASSWORD=$DATABASE_MIGRATION_PASSWORD
+
+until psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_MIGRATION_USERNAME -tAc '\q'; do
+  >&2 echo "Postgres is unavailable - sleeping"
+done
+
+if ! psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_MIGRATION_USERNAME -d $DATABASE_NAME -tAc "SELECT 1 from pg_roles WHERE rolname='app';" | grep -q 1 ; then
+    >&2 echo "Adding app user"
+    psql -h $DATABASE_HOST -p $DATABASE_PORT -U $DATABASE_MIGRATION_USERNAME -d $DATABASE_NAME -c "CREATE USER app WITH PASSWORD '$DATABASE_APP_PASSWORD';"
+fi
+  
+export DATABASE_URL="postgres://$DATABASE_MIGRATION_USERNAME:$DATABASE_MIGRATION_PASSWORD@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME"
+
+exec "$@"
+
