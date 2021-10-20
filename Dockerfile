@@ -1,4 +1,4 @@
-FROM rust:1.55 AS build
+FROM rust:1.55-slim-bullseye AS build
 
 RUN echo "Installing build dependencies" \
     && apt-get update \
